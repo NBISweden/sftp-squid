@@ -1,1 +1,10 @@
 SFTP-Squid - CLI for transferring files between sftp servers
+---
+
+Currently some tests have been made.
+
+test.py - paramiko test, get half of transferspeed of scp
+test.pl - perl ssh2 test, better performance by a lot, but the api is just a
+          thin wrapper around C
+
+Location of ssh-keys are hardcoded in these files.
