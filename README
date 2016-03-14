@@ -3,15 +3,14 @@ SFTP-Squid - CLI for transferring files between sftp servers
 
 Currently some tests have been made.
 
-test.py      - paramiko test, get half of transferspeed of scp
-test.pl      - perl ssh2 test, better performance by a lot, but the api is just a
-               thin wrapper around C
+test.py      - paramiko test
+test.pl      - perl ssh2 test
 test.go      - Go test program
 test_scp.sh  - Testing with scp
 test_sftp.sh - Testing with sftp
 Sftp.java    - Testing java jsch library (http://www.jcraft.com/jsch/)
 
-Location of ssh-keys are hardcoded in these files.
+Location of ssh-keys and/or passwords are hardcoded in these files.
 
 Timings:
 
@@ -22,3 +21,6 @@ perl    44.2    24.2    20.4    19.4    22.4
 Go      22.5    19.8    22.6    19.0    22.6
 Go(c)   19.7    23.5    20.5    20.8    19.4
 Java    13.0    13.1    13.1    13.0    13.1
+
+
+The java library seems to be faster than even the scp and sftp programs.
