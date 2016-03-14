@@ -5,6 +5,7 @@ use warnings;
 use feature ':5.20';
 
 use Fcntl;
+use Time::HiRes qw(gettimeofday tv_interval);
 
 use Net::SSH2;
 
@@ -19,12 +20,12 @@ $ssh->auth_publickey('vagrant', $public_key, $private_key)
 
 my $sftp = $ssh->sftp() or die;
 
+my $start = [gettimeofday()];
 my $remote_file = $sftp->open('test_file_perl', O_WRONLY|O_CREAT) or die "$!, $?";
 open my $local_file, '<', 'test_file' or die;
 
 my $buffer;
 my $LENGTH = 2**20;
-say "Print loop";
 while ( sysread $local_file, $buffer, $LENGTH ) {
     my $len = length $buffer;
     my $written = 0;
@@ -32,7 +33,7 @@ while ( sysread $local_file, $buffer, $LENGTH ) {
         $written += syswrite $remote_file, $buffer, length $buffer, $written;
     }
 }
-say "done";
+say "Perl done in ", tv_interval($start), " seconds";
 
 close $remote_file;
 close $local_file;
