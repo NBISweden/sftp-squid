@@ -9,6 +9,7 @@ test.pl      - perl ssh2 test, better performance by a lot, but the api is just 
 test.go      - Go test program
 test_scp.sh  - Testing with scp
 test_sftp.sh - Testing with sftp
+Sftp.java    - Testing java jsch library (http://www.jcraft.com/jsch/)
 
 Location of ssh-keys are hardcoded in these files.
 
