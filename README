@@ -1,6 +1,9 @@
 SFTP-Squid - CLI for transferring files between sftp servers
 ---
 
+
+Tests are in tests directory.
+
 Currently some tests have been made.
 
 test.py      - paramiko test
@@ -23,4 +26,9 @@ Go(c)   19.7    23.5    20.5    20.8    19.4
 Java    13.0    13.1    13.1    13.0    13.1
 
 
-The java library seems to be faster than even the scp and sftp programs.
+The java library seems to be faster than even the scp and sftp programs. The
+upload halts sometimes on large uploads, for no apparent reason (the c.rwsize
+in Session.java of JSch turns to zero and never gets incremented (like it
+normally is)).
+
+Gonna try a different Java library.
