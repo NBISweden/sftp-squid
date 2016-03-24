@@ -1,0 +1,6 @@
+### Password is set to asdfasdf
+- name: set password for vagrant user
+  user:
+      name: vagrant
+      password: $6$rounds=656000$XBg/CqFDcytsP0yi$GVC0tw99djbY8Mq2iNatofS.pHqJuFX3CjVZ27/JDtOOXwI6ICe0CpoHIlllUhWiDfDB1YEpdHe/OkMGqwOQF0
+      update_password: always

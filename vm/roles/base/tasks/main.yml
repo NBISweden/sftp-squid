@@ -1,0 +1,5 @@
+- name: The necesary programs
+  yum: state=present name={{ item }}
+  with_items:
+      - vim
+

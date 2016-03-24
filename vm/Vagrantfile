@@ -15,8 +15,10 @@ Vagrant.configure(2) do |config|
   config.vm.box = "centos/7"
   (1..2).each do |i|
       config.vm.define "node-#{i}" do |node|
-        node.vm.provision "shell",
-          inline: "echo hello from #{i}"
+          config.vm.provision "ansible" do |ansible|
+              ansible.sudo = true
+              ansible.playbook = 'playbook.yml'
+          end
       end
   end
 

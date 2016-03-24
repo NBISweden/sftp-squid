@@ -1,0 +1,5 @@
+- hosts: node-*
+  roles:
+      - base
+      - vagrant-password
+      - pam-python

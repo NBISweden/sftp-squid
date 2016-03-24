@@ -1,0 +1,61 @@
+- name: install dependencies
+  yum: state=present name={{ item }}
+  with_items:
+      - python-sphinx
+      - gcc
+      - pam-devel
+      - python-devel
+- name: extract pam-python
+  unarchive:
+      src: pam-python-1.0.5.tar.gz
+      dest: /home/vagrant/
+      owner: vagrant
+      group: vagrant
+- name: Unset -Werror in Makefile
+  shell: sed -i 's/-Werror//' Makefile
+  args:
+      chdir: /home/vagrant/pam-python-1.0.5/src/
+- name: Fix default securitydir
+  shell: sed -i 's/\/lib\/security/\/lib64\/security/' pam_python.c
+  args:
+      chdir: /home/vagrant/pam-python-1.0.5/src/
+- name: Make pam-python
+  shell: make
+  args:
+      chdir: /home/vagrant/pam-python-1.0.5
+- name: Install pam python
+  shell: cp src/build/lib.linux-x86_64-2.7/pam_python.so /lib64/security/
+  args:
+      chdir: /home/vagrant/pam-python-1.0.5
+- name: Copy custum pam module
+  copy:
+      src: second_factor.py
+      dest: /lib64/security/
+
+- name: Update sshd config 1
+  lineinfile:
+      dest: /etc/ssh/sshd_config
+      regexp: "PasswordAuthentication yes"
+      line: "PasswordAuthentication no"
+      state: present
+- name: Update sshd config 2
+  lineinfile:
+      dest: /etc/ssh/sshd_config
+      regexp: ChallengeResponseAuthentication\s+no
+      line: ChallengeResponseAuthentication yes
+      state: present
+- name: restart sshd
+  service: name=sshd state=restarted
+
+- name: Update pam auth file 1
+  lineinfile:
+      dest: /etc/pam.d/password-auth
+      regexp: (^auth\s+)sufficient(\s+pam_unix.so.*$)
+      line: \1requisite\2
+      backrefs: yes
+- name: Update pam auth file 2
+  lineinfile:
+      dest: /etc/pam.d/password-auth
+      insertafter: auth\s+requisite\s+pam_unix.so
+      line: auth        sufficient    pam_python.so second_factor.py
+      state: present
