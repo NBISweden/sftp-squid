@@ -24,6 +24,8 @@ perl    44.2    24.2    20.4    19.4    22.4
 Go      22.5    19.8    22.6    19.0    22.6
 Go(c)   19.7    23.5    20.5    20.8    19.4
 Java    13.0    13.1    13.1    13.0    13.1
+SSHj    18.8    20.5    22.4    22.1    17.1
+SSHj-j  14.9    13.7    14.9    13.4    14.9
 
 
 The java library seems to be faster than even the scp and sftp programs. The
