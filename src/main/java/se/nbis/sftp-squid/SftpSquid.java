@@ -20,6 +20,20 @@ import net.schmizz.sshj.userauth.password.Resource;
 import net.schmizz.sshj.common.StreamCopier;
 
 
+/**
+ * SftpSquid - Program to transfer files between multiple sftp servers.
+ *
+ * It is assumed that the user of this program do not have shell access through
+ * SSH. Instead it streams the data from one server to the other through the
+ * local machine. No data is stored locally.
+ *
+ * Further the program do not store any authentication information. Passwords
+ * and other credentials are just passed through to the servers in question.
+ *
+ * @author  Johan Viklund <johan.viklund@bils.se>
+ * @version 0.1
+ * @since   2016-03-31
+ */
 public class SftpSquid {
     SSHClient[] ssh_clients;
     SFTPClient[] sftp_clients;
@@ -31,6 +45,11 @@ public class SftpSquid {
         ss.run();
     }
 
+    /**
+     * Parse command line arguments.
+     *
+     * @param args the args array from the main method
+     */
     public static HostFileInfo[] parseArgs(String[] args) {
         if (args.length < 2) {
             System.err.println("You need to supply at least 2 servers");
@@ -48,6 +67,11 @@ public class SftpSquid {
         return hf;
     }
 
+    /**
+     * Construct a new SftpSquid object from an array of HostFileInfos
+     *
+     * @param HostFileInfo[] an array of HostFileInfo
+     */
     SftpSquid(HostFileInfo[] hf) throws IOException {
         if (hf.length < 2) {
             throw new IOException("Need at least 2 hosts to transfer between");
@@ -57,10 +81,13 @@ public class SftpSquid {
         this.sftp_clients = new SFTPClient[hf.length];
     }
 
+    /**
+     * The main loop of the program.
+     */
     public void run() throws IOException {
         try {
             connectAll();
-            transferFile();
+            transfer();
         }
         catch (Exception e) {
             usage();
@@ -70,11 +97,17 @@ public class SftpSquid {
         }
     }
 
+    /**
+     * Print a simple usage statement to the user
+     */
     public void usage() {
         System.out.println("Usage: sftp-squid <user1>@<server1>:<file_or_directory> <user2>@<server2>:<file_or_directory>");
     }
 
 
+    /**
+     * Connect to the servers specified on the command line
+     */
     public void connectAll() throws IOException {
         for (int i=0; i<hfs.length; i++) {
             try {
@@ -104,6 +137,9 @@ public class SftpSquid {
         }
     }
 
+    /**
+     * Close all open connections
+     */
     public void closeAll() throws IOException {
         for (SFTPClient sftp_client : sftp_clients) {
             if (sftp_client != null) {
@@ -117,6 +153,12 @@ public class SftpSquid {
         }
     }
 
+    /**
+     * Connect to one SFTP server
+     *
+     * @param  HostFileInfo A HostFileInfo object representing the server
+     * @return SSHClient
+     */
     private SSHClient connect(HostFileInfo hf)
             throws UserAuthException, TransportException, IOException {
         SSHClient ssh = new SSHClient();
@@ -127,7 +169,10 @@ public class SftpSquid {
         return ssh;
     }
 
-    public void transferFile() throws IOException {
+    /**
+     * Transfer the files
+     */
+    public void transfer() throws IOException {
         RemoteFile fileFrom = sftp_clients[0].open(hfs[0].file);
         // Check if destination is a directory
 
@@ -165,43 +210,74 @@ public class SftpSquid {
     }
 }
 
+/**
+ * customListener - report progress to the user of the program
+ */
 class customListener implements StreamCopier.Listener {
+    /** Total length of the current file */
     long length = 0;
+    /** When to update the progressbar next */
     long nextPrint = 0;
-    long printDuration = 0;
+    /** How often we should update the progressbar */
+    long printStepSize = 0;
 
+    /**
+     * Create a new listener
+     *
+     * @param length size of file in bytes
+     */
     customListener(long length) {
         this.length = length;
-        printDuration = length/1000;
+        printStepSize = length/1000;
     }
 
+    /**
+     * Display the progressbar
+     *
+     * @param transferred The number of bytes transferred so far
+     */
     @Override
     public void reportProgress(long transferred) throws IOException {
         if (length != 0 && transferred == length) {
             System.out.printf("\r100.0%% Done\n");
         }
         else if (nextPrint < transferred) {
-            nextPrint = transferred + printDuration;
+            nextPrint = transferred + printStepSize;
             System.out.printf("\r%5.1f%% ", 100 * (double) transferred/ (double) length);
         }
         //System.out.println("Transf: " + transferred);
     }
 }
 
+/**
+ * Ask the user for passwords
+ */
 class UserKeyboardAuth implements ChallengeResponseProvider {
-    int n = 0;
+    /** Information gotten from the connection */
     Resource r;
+    /** Information about the current host, used to show the user what host they are connecting to */
     HostFileInfo hf;
 
+    /**
+     * Constructor
+     *
+     * @param HostFileInfo Information about the current host
+     */
     UserKeyboardAuth(HostFileInfo hf) {
         this.hf = hf;
     }
 
+    /**
+     * Not sure what this method is for, had to be implemented though.
+     */
     @Override
     public List<String> getSubmethods() {
         return new ArrayList<String>(0);
     }
 
+    /**
+     * Initialize the object, the parameters are filled in by the SSHj library.
+     */
     @Override
     public void init(Resource resource, String name, String instruction) {
         r = resource;
@@ -209,6 +285,12 @@ class UserKeyboardAuth implements ChallengeResponseProvider {
         return;
     }
 
+    /**
+     * Get user response from questions the server sends us, such as passwords.
+     *
+     * @param prompt the prompt that the server sent us
+     * @param echo   whether to echo what the user types to the screen or not
+     */
     @Override
     public char[] getResponse(String prompt, boolean echo) {
         System.out.printf("[%s] %s", hf.userHostSpec(), prompt);
@@ -217,18 +299,36 @@ class UserKeyboardAuth implements ChallengeResponseProvider {
         return resp;
     }
 
+    /**
+     * Should we retry failed password attempts? Currently no.
+     */
     @Override
     public boolean shouldRetry() {
         return false;
     }
 }
 
+/**
+ * Class representing the sftp host and file to transfer
+ */
 class HostFileInfo {
+    /** Just the hostname */
     public String host;
+    /** The user name */
     public String user;
+    /** The file to transfer */
     public String file;
+    /** The port to use when connecting, default 22 */
     public int port = 22;
 
+    /**
+     * Create a new object by parsing a string.
+     *
+     * The string should have this format:
+     *   <user>@<host>[:port]:path
+     *
+     * @param arg a string representing a user-host-file
+     */
     HostFileInfo(String arg) throws IOException {
         String[] parts = arg.split("@|:");
         if (parts.length < 3 || parts.length > 4) {
@@ -246,6 +346,9 @@ class HostFileInfo {
         }
     }
 
+    /**
+     * A string representing only the username/host and possibly custom port number.
+     */
     public String userHostSpec() {
         String userHost = user + "@" + host;
         if ( port != 22 ) {
@@ -254,6 +357,9 @@ class HostFileInfo {
         return userHost;
     }
 
+    /**
+     * toString!!
+     */
     public String toString() {
         return "[HostFileInfo " + user + "@" + host + ":" + port + ":" + file + "]";
     }
