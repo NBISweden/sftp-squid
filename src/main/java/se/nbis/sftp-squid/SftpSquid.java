@@ -253,8 +253,6 @@ class customListener implements StreamCopier.Listener {
  * Ask the user for passwords
  */
 class UserKeyboardAuth implements ChallengeResponseProvider {
-    /** Information gotten from the connection */
-    Resource r;
     /** Information about the current host, used to show the user what host they are connecting to */
     HostFileInfo hf;
 
@@ -280,9 +278,6 @@ class UserKeyboardAuth implements ChallengeResponseProvider {
      */
     @Override
     public void init(Resource resource, String name, String instruction) {
-        r = resource;
-        //System.out.printf("Resource %s, Name, %s, Instruction %s\n", resource, name, instruction);
-        return;
     }
 
     /**
