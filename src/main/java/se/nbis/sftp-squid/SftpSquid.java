@@ -115,7 +115,7 @@ public class SftpSquid {
         for (int i=0; i<hfs.length; i++) {
             try {
                 int tries = 3;
-                while (tries-- >= 0) {
+                while (tries-- > 0) {
                     try {
                         SSHClient ssh = connect(hfs[i]);
                         SFTPClient sftp = ssh.newSFTPClient();
@@ -125,11 +125,11 @@ public class SftpSquid {
                         tries = -1;
                     } catch (UserAuthException e) {
                         System.err.println("Incorrect username and/or password for " + hfs[i].userHostSpec() + " try again.");
+                        if (tries <= 0) {
+                            throw e;
+                        }
                     }
                 }
-            } catch (UserAuthException e) {
-                System.err.println("Incorrect username and/or password for " + hfs[i].userHostSpec());
-                throw e;
             } catch (TransportException e) {
                 System.err.println("Something went wrong: " + e);
                 throw e;
