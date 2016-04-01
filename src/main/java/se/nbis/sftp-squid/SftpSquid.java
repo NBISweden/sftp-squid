@@ -1,10 +1,7 @@
 package se.nbis.sftp_squid;
 
 import java.util.EnumSet;
-import java.util.List;
-import java.util.ArrayList;
 import java.io.IOException;
-import java.io.Console;
 import java.net.ConnectException;
 
 import org.apache.log4j.Level;
@@ -18,9 +15,7 @@ import net.schmizz.sshj.sftp.OpenMode;
 import net.schmizz.sshj.transport.TransportException;
 import net.schmizz.sshj.transport.verification.PromiscuousVerifier;
 import net.schmizz.sshj.userauth.method.AuthKeyboardInteractive;
-import net.schmizz.sshj.userauth.method.ChallengeResponseProvider;
 import net.schmizz.sshj.userauth.UserAuthException;
-import net.schmizz.sshj.userauth.password.Resource;
 import net.schmizz.sshj.common.StreamCopier;
 
 
@@ -98,6 +93,7 @@ public class SftpSquid {
             transfer();
         }
         catch (Exception e) {
+            System.out.println("Exception: " + e);
             usage();
         }
         finally {
@@ -188,7 +184,7 @@ public class SftpSquid {
                 StreamCopier sc = new StreamCopier(streamFrom, streamTo);
                 sc.bufSize(calculateMaxBufferSize(fileFrom, fileTo));
                 sc.keepFlushing(false);
-                sc.listener(new CustomListener(fileFrom.length(), hfs[0].fileNameOnly()));
+                sc.listener(new ProgressBarListener(fileFrom.length(), hfs[0].fileNameOnly()));
                 sc.copy();
             } finally {
                 streamFrom.close();
@@ -209,209 +205,5 @@ public class SftpSquid {
         }
         int packetOverhead = f2.getOutgoingPacketOverhead();
         return remoteMaxPacketSize - packetOverhead;
-    }
-}
-
-/**
- * CustomListener - report progress to the user of the program
- */
-class CustomListener implements StreamCopier.Listener {
-    /** Total length of the current file */
-    private long length = 0;
-    /** When to update the progressbar next */
-    private long nextPrint = 0;
-    /** How often we should update the progressbar */
-    private long printStepSize = 0;
-    /** Width of progressbar */
-    private int width = 60;
-    /** File name that is currently beeing transferred */
-    private String file_name;
-
-    /**
-     * Create a new listener
-     *
-     * @param length size of file in bytes
-     */
-    CustomListener(long length, String file_name) {
-        this.length    = length;
-        this.file_name = renderFileName( file_name ); // Might as well just cache this
-
-        printStepSize  = length/1000;
-        width          = 60;
-    }
-
-    /**
-     * Display the progressbar
-     *
-     * @param transferred The number of bytes transferred so far
-     */
-    @Override
-    public void reportProgress(long transferred) throws IOException {
-        if (length != 0 && transferred == length) {
-            String prog = renderBar(transferred);
-            String size = renderSize(transferred);
-            System.out.printf("\r%-10.10s %s %s %5.1f%%\n", file_name, prog, size, 100.0);
-        }
-        else if (nextPrint < transferred) {
-            nextPrint = transferred + printStepSize;
-
-            String prog = renderBar(transferred);
-            String size = renderSize(transferred);
-
-            double percentDone = 100 * (double) transferred/ (double) length;
-
-            System.out.printf("\r%-10.10s %s %s %5.1f%%", file_name, prog, size, percentDone);
-        }
-    }
-
-    private String renderFileName(String file_name) {
-        if (file_name.length() > 10) {
-            return String.format("%-8.8s..", file_name);
-        }
-        return String.format("%-10.10s", file_name);
-    }
-
-    private String renderSize(long transferred) {
-        String[] sizes = {"", "Kb", "Mb", "Gb", "Tb", "Pb", "Hb"};
-        int exponent = (int) Math.floor( Math.log(transferred) / Math.log(1000) );
-        double size = transferred / Math.pow(1000.0, (double) exponent);
-        return String.format("%6.1f %2.2s", size, sizes[exponent]);
-    }
-
-    private String renderBar(long transferred) {
-        int bar_length = (int) ((width - 2) * transferred / length);
-
-        String prog = "|";
-        for (int i=0; i<bar_length-1; i++) {
-            prog += "=";
-        }
-        if (bar_length > 0 && bar_length < width - 2) {
-            prog += ">";
-        }
-        for (int i=bar_length+1; i<width-2; i++) {
-            prog += " ";
-        }
-        prog += "|";
-
-        return prog;
-    }
-}
-
-/**
- * Ask the user for passwords
- */
-class UserKeyboardAuth implements ChallengeResponseProvider {
-    /** Information about the current host, used to show the user what host they are connecting to */
-    HostFileInfo hf;
-
-    /**
-     * Constructor
-     *
-     * @param HostFileInfo Information about the current host
-     */
-    UserKeyboardAuth(HostFileInfo hf) {
-        this.hf = hf;
-    }
-
-    /**
-     * Not sure what this method is for, had to be implemented though.
-     */
-    @Override
-    public List<String> getSubmethods() {
-        return new ArrayList<String>(0);
-    }
-
-    /**
-     * Initialize the object, the parameters are filled in by the SSHj library.
-     */
-    @Override
-    public void init(Resource resource, String name, String instruction) {
-    }
-
-    /**
-     * Get user response from questions the server sends us, such as passwords.
-     *
-     * @param prompt the prompt that the server sent us
-     * @param echo   whether to echo what the user types to the screen or not
-     */
-    @Override
-    public char[] getResponse(String prompt, boolean echo) {
-        System.out.printf("[%s] %s", hf.userHostSpec(), prompt);
-        Console cons = System.console();
-        char[] resp = cons.readPassword();
-        return resp;
-    }
-
-    /**
-     * Should we retry failed password attempts? Currently no.
-     */
-    @Override
-    public boolean shouldRetry() {
-        return false;
-    }
-}
-
-/**
- * Class representing the sftp host and file to transfer
- */
-class HostFileInfo {
-    /** Just the hostname */
-    public String host;
-    /** The user name */
-    public String user;
-    /** The file to transfer */
-    public String file;
-    /** The port to use when connecting, default 22 */
-    public int port = 22;
-
-    /**
-     * Create a new object by parsing a string.
-     *
-     * The string should have this format:
-     *   <user>@<host>[:port]:path
-     *
-     * @param arg a string representing a user-host-file
-     */
-    HostFileInfo(String arg) throws IOException {
-        String[] parts = arg.split("@|:");
-        if (parts.length < 3 || parts.length > 4) {
-            throw new IOException("Malformed hoststring");
-        }
-        user = parts[0];
-        host = parts[1];
-
-        if ( parts.length == 4 ) {
-            port = Integer.parseInt(parts[2]);
-            file = parts[3];
-        }
-        else {
-            file = parts[2];
-        }
-    }
-
-    /**
-     * A string representing only the username/host and possibly custom port number.
-     */
-    public String userHostSpec() {
-        String userHost = user + "@" + host;
-        if ( port != 22 ) {
-            return userHost + ":" + port;
-        }
-        return userHost;
-    }
-
-    /**
-     * Only the filename part of the path
-     */
-    public String fileNameOnly() {
-        String[] parts = file.split("/"); // SFTP Servers always use this separator
-        return parts[parts.length-1];
-    }
-
-    /**
-     * toString!!
-     */
-    public String toString() {
-        return "[HostFileInfo " + user + "@" + host + ":" + port + ":" + file + "]";
     }
 }
