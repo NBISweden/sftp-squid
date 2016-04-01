@@ -7,6 +7,10 @@ import java.io.IOException;
 import java.io.Console;
 import java.net.ConnectException;
 
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
+import org.apache.log4j.BasicConfigurator;
+
 import net.schmizz.sshj.SSHClient;
 import net.schmizz.sshj.sftp.SFTPClient;
 import net.schmizz.sshj.sftp.RemoteFile;
@@ -40,6 +44,10 @@ public class SftpSquid {
     private HostFileInfo[] hfs;
 
     public static void main(String[] args) throws IOException {
+        /* The SSHj library logs a lot, need to setup the logger for it */
+        BasicConfigurator.configure();
+        Logger.getRootLogger().setLevel(Level.ERROR);
+
         HostFileInfo[] hf = parseArgs(args);
         SftpSquid ss = new SftpSquid(hf);
         ss.run();
