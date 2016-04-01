@@ -35,9 +35,9 @@ import net.schmizz.sshj.common.StreamCopier;
  * @since   2016-03-31
  */
 public class SftpSquid {
-    SSHClient[] ssh_clients;
-    SFTPClient[] sftp_clients;
-    HostFileInfo[] hfs;
+    private SSHClient[] ssh_clients;
+    private SFTPClient[] sftp_clients;
+    private HostFileInfo[] hfs;
 
     public static void main(String[] args) throws IOException {
         HostFileInfo[] hf = parseArgs(args);
@@ -103,7 +103,6 @@ public class SftpSquid {
     public void usage() {
         System.out.println("Usage: sftp-squid <user1>@<server1>:<file_or_directory> <user2>@<server2>:<file_or_directory>");
     }
-
 
     /**
      * Connect to the servers specified on the command line
@@ -181,7 +180,7 @@ public class SftpSquid {
                 StreamCopier sc = new StreamCopier(streamFrom, streamTo);
                 sc.bufSize(calculateMaxBufferSize(fileFrom, fileTo));
                 sc.keepFlushing(false);
-                sc.listener(new customListener(fileFrom.length(), hfs[0].fileNameOnly()));
+                sc.listener(new CustomListener(fileFrom.length(), hfs[0].fileNameOnly()));
                 sc.copy();
             } finally {
                 streamFrom.close();
@@ -206,26 +205,26 @@ public class SftpSquid {
 }
 
 /**
- * customListener - report progress to the user of the program
+ * CustomListener - report progress to the user of the program
  */
-class customListener implements StreamCopier.Listener {
+class CustomListener implements StreamCopier.Listener {
     /** Total length of the current file */
-    long length = 0;
+    private long length = 0;
     /** When to update the progressbar next */
-    long nextPrint = 0;
+    private long nextPrint = 0;
     /** How often we should update the progressbar */
-    long printStepSize = 0;
+    private long printStepSize = 0;
     /** Width of progressbar */
-    int width = 60;
+    private int width = 60;
     /** File name that is currently beeing transferred */
-    String file_name;
+    private String file_name;
 
     /**
      * Create a new listener
      *
      * @param length size of file in bytes
      */
-    customListener(long length, String file_name) {
+    CustomListener(long length, String file_name) {
         this.length    = length;
         this.file_name = renderFileName( file_name ); // Might as well just cache this
 
@@ -397,7 +396,7 @@ class HostFileInfo {
      * Only the filename part of the path
      */
     public String fileNameOnly() {
-        String[] parts = file.split("/"); // SFTP Servers always use this...
+        String[] parts = file.split("/"); // SFTP Servers always use this separator
         return parts[parts.length-1];
     }
 
