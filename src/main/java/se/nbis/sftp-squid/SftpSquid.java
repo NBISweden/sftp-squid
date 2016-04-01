@@ -93,7 +93,6 @@ public class SftpSquid {
             transfer();
         }
         catch (Exception e) {
-            System.out.println("Exception: " + e);
             usage();
         }
         finally {
@@ -176,29 +175,41 @@ public class SftpSquid {
      * Transfer the files
      */
     public void transfer() throws IOException {
-        RemoteFile fileFrom = sftp_clients[0].open(hfs[0].file);
-        // Check if destination is a directory
+        transferFile(hfs[0].file, hfs[1].file);
+    }
 
-        RemoteFile fileTo   = sftp_clients[1].open(hfs[1].file, EnumSet.of(OpenMode.WRITE, OpenMode.CREAT, OpenMode.TRUNC));
+    private void transferFile(String source, String destination) throws IOException {
+        RemoteFile fileSource = sftp_clients[0].open(source);
+        RemoteFile fileDestination = sftp_clients[1].open(destination, EnumSet.of(OpenMode.WRITE, OpenMode.CREAT, OpenMode.TRUNC));
 
         try {
-            RemoteFile.ReadAheadRemoteFileInputStream streamFrom = fileFrom.new ReadAheadRemoteFileInputStream(16);
-            RemoteFile.RemoteFileOutputStream streamTo           = fileTo.new RemoteFileOutputStream(0, 16);
+            RemoteFile.ReadAheadRemoteFileInputStream streamSource
+                = fileSource.new ReadAheadRemoteFileInputStream(16);
+            RemoteFile.RemoteFileOutputStream streamDestination
+                = fileDestination.new RemoteFileOutputStream(0, 16);
 
             try {
-                StreamCopier sc = new StreamCopier(streamFrom, streamTo);
-                sc.bufSize(calculateMaxBufferSize(fileFrom, fileTo));
+                StreamCopier sc = new StreamCopier(streamSource, streamDestination);
+                sc.bufSize(calculateMaxBufferSize(fileSource, fileDestination));
                 sc.keepFlushing(false);
-                sc.listener(new ProgressBarListener(fileFrom.length(), hfs[0].fileNameOnly()));
+                sc.listener(new ProgressBarListener(fileSource.length(), fileNameOnly(source)));
                 sc.copy();
             } finally {
-                streamFrom.close();
-                streamTo.close();
+                streamSource.close();
+                streamDestination.close();
             }
         } finally {
-            fileFrom.close();
-            fileTo.close();
+            fileSource.close();
+            fileDestination.close();
         }
+    }
+
+    /**
+     * Only the filename part of the path
+     */
+    private String fileNameOnly(String path) {
+        String[] parts = path.split("/"); // SFTP Servers always use this separator
+        return parts[parts.length-1];
     }
 
     /* This code is taken from the library docs and adjusted to match the

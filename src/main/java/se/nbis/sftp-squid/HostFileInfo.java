@@ -52,14 +52,6 @@ class HostFileInfo {
     }
 
     /**
-     * Only the filename part of the path
-     */
-    public String fileNameOnly() {
-        String[] parts = file.split("/"); // SFTP Servers always use this separator
-        return parts[parts.length-1];
-    }
-
-    /**
      * toString!!
      */
     public String toString() {
