@@ -163,7 +163,12 @@ public class SftpSquid {
         ssh.addHostKeyVerifier(new PromiscuousVerifier());
         ssh.connect(hf.host, hf.port);
 
-        ssh.auth(hf.user, new AuthKeyboardInteractive(new UserKeyboardAuth(hf)));
+        try {
+            ssh.auth(hf.user, new AuthKeyboardInteractive(new UserKeyboardAuth(hf)));
+        } catch (Exception e) {
+            ssh.close(); // We have to clean this up
+            throw e;
+        }
         return ssh;
     }
 
