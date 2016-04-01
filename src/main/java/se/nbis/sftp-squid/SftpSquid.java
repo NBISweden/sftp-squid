@@ -186,7 +186,7 @@ public class SftpSquid {
                 StreamCopier sc = new StreamCopier(streamFrom, streamTo);
                 sc.bufSize(calculateMaxBufferSize(fileFrom, fileTo));
                 sc.keepFlushing(false);
-                sc.listener(new customListener(fileFrom.length()));
+                sc.listener(new customListener(fileFrom.length(), hfs[0].fileNameOnly()));
                 sc.copy();
             } finally {
                 streamFrom.close();
@@ -220,15 +220,22 @@ class customListener implements StreamCopier.Listener {
     long nextPrint = 0;
     /** How often we should update the progressbar */
     long printStepSize = 0;
+    /** Width of progressbar */
+    int width = 60;
+    /** File name that is currently beeing transferred */
+    String file_name;
 
     /**
      * Create a new listener
      *
      * @param length size of file in bytes
      */
-    customListener(long length) {
-        this.length = length;
-        printStepSize = length/1000;
+    customListener(long length, String file_name) {
+        this.length    = length;
+        this.file_name = renderFileName( file_name ); // Might as well just cache this
+
+        printStepSize  = length/1000;
+        width          = 60;
     }
 
     /**
@@ -239,13 +246,52 @@ class customListener implements StreamCopier.Listener {
     @Override
     public void reportProgress(long transferred) throws IOException {
         if (length != 0 && transferred == length) {
-            System.out.printf("\r100.0%% Done\n");
+            String prog = renderBar(transferred);
+            String size = renderSize(transferred);
+            System.out.printf("\r%-10.10s %s %s %5.1f%%\n", file_name, prog, size, 100.0);
         }
         else if (nextPrint < transferred) {
             nextPrint = transferred + printStepSize;
-            System.out.printf("\r%5.1f%% ", 100 * (double) transferred/ (double) length);
+
+            String prog = renderBar(transferred);
+            String size = renderSize(transferred);
+
+            double percentDone = 100 * (double) transferred/ (double) length;
+
+            System.out.printf("\r%-10.10s %s %s %5.1f%%", file_name, prog, size, percentDone);
         }
-        //System.out.println("Transf: " + transferred);
+    }
+
+    private String renderFileName(String file_name) {
+        if (file_name.length() > 10) {
+            return String.format("%-8.8s..", file_name);
+        }
+        return String.format("%-10.10s", file_name);
+    }
+
+    private String renderSize(long transferred) {
+        String[] sizes = {"", "Kb", "Mb", "Gb", "Tb", "Pb", "Hb"};
+        int exponent = (int) Math.floor( Math.log(transferred) / Math.log(1000) );
+        double size = transferred / Math.pow(1000.0, (double) exponent);
+        return String.format("%6.1f %2.2s", size, sizes[exponent]);
+    }
+
+    private String renderBar(long transferred) {
+        int bar_length = (int) ((width - 2) * transferred / length);
+
+        String prog = "|";
+        for (int i=0; i<bar_length-1; i++) {
+            prog += "=";
+        }
+        if (bar_length > 0 && bar_length < width - 2) {
+            prog += ">";
+        }
+        for (int i=bar_length+1; i<width-2; i++) {
+            prog += " ";
+        }
+        prog += "|";
+
+        return prog;
     }
 }
 
@@ -350,6 +396,14 @@ class HostFileInfo {
             return userHost + ":" + port;
         }
         return userHost;
+    }
+
+    /**
+     * Only the filename part of the path
+     */
+    public String fileNameOnly() {
+        String[] parts = file.split("/"); // SFTP Servers always use this...
+        return parts[parts.length-1];
     }
 
     /**
