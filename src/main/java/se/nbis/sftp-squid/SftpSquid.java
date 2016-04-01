@@ -141,13 +141,8 @@ public class SftpSquid {
      * Close all open connections
      */
     public void closeAll() throws IOException {
-        for (SFTPClient sftp_client : sftp_clients) {
-            if (sftp_client != null) {
-                sftp_client.close();
-            }
-        }
         for (SSHClient ssh_client : ssh_clients) {
-            if (ssh_client != null) {
+            if (ssh_client != null && ssh_client.isConnected()) {
                 ssh_client.close();
             }
         }
