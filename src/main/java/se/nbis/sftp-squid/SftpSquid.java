@@ -182,9 +182,12 @@ public class SftpSquid {
         String source = hfs[0].file;
         String destination = hfs[1].file;
 
-        if ( sftp_clients[1].type(destination) == FileMode.Type.DIRECTORY ) {
-            destination += '/' + FilenameUtils.getBaseName(source);
+        try {
+            if ( sftp_clients[1].type(destination) == FileMode.Type.DIRECTORY ) {
+                destination += '/' + FilenameUtils.getBaseName(source);
+            }
         }
+        catch (Exception e) {}
 
         transferFile(source, destination);
     }
