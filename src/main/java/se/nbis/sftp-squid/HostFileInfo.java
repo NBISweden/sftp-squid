@@ -25,6 +25,16 @@ class HostFileInfo {
      */
     HostFileInfo(String arg) throws IOException {
         String[] parts = arg.split("@|:");
+
+        if (arg.charAt(arg.length() - 1) == ':') {
+            String[] np = new String[parts.length + 1];
+            for (int i=0; i<parts.length; i++) {
+                np[i] = parts[i];
+            }
+            np[parts.length] = ".";
+            parts = np;
+        }
+
         if (parts.length < 3 || parts.length > 4) {
             throw new IOException("Malformed hoststring");
         }
