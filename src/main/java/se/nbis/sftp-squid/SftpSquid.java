@@ -8,10 +8,14 @@ import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.log4j.BasicConfigurator;
 
+import org.apache.commons.io.FilenameUtils;
+
+
 import net.schmizz.sshj.SSHClient;
 import net.schmizz.sshj.sftp.SFTPClient;
 import net.schmizz.sshj.sftp.RemoteFile;
 import net.schmizz.sshj.sftp.OpenMode;
+import net.schmizz.sshj.sftp.FileMode;
 import net.schmizz.sshj.transport.TransportException;
 import net.schmizz.sshj.transport.verification.PromiscuousVerifier;
 import net.schmizz.sshj.userauth.method.AuthKeyboardInteractive;
@@ -175,7 +179,14 @@ public class SftpSquid {
      * Transfer the files
      */
     public void transfer() throws IOException {
-        transferFile(hfs[0].file, hfs[1].file);
+        String source = hfs[0].file;
+        String destination = hfs[1].file;
+
+        if ( sftp_clients[1].type(destination) == FileMode.Type.DIRECTORY ) {
+            destination += '/' + FilenameUtils.getBaseName(source);
+        }
+
+        transferFile(source, destination);
     }
 
     private void transferFile(String source, String destination) throws IOException {
