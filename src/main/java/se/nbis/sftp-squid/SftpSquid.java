@@ -42,10 +42,13 @@ public class SftpSquid {
     private SFTPClient[] sftp_clients;
     private HostFileInfo[] hfs;
 
+    private Logger log = Logger.getLogger(getClass());
+
     public static void main(String[] args) throws IOException {
         /* The SSHj library logs a lot, need to setup the logger for it */
         BasicConfigurator.configure();
         Logger.getRootLogger().setLevel(Level.ERROR);
+        Logger.getLogger("se.nbis.sftp_squid.SftpSquid").setLevel(Level.DEBUG);
 
         HostFileInfo[] hf = parseArgs(args);
         SftpSquid ss = new SftpSquid(hf);
@@ -92,11 +95,13 @@ public class SftpSquid {
      * The main loop of the program.
      */
     public void run() throws IOException {
+        log.debug("run()");
         try {
             connectAll();
             transfer();
         }
         catch (Exception e) {
+            System.err.println(e.getMessage());
             usage();
         }
         finally {
@@ -115,6 +120,7 @@ public class SftpSquid {
      * Connect to the servers specified on the command line
      */
     public void connectAll() throws IOException {
+        log.debug("connectAll");
         for (int i=0; i<hfs.length; i++) {
             try {
                 int tries = 3;
@@ -147,6 +153,7 @@ public class SftpSquid {
      * Close all open connections
      */
     public void closeAll() throws IOException {
+        log.debug("closeAll()");
         for (SSHClient ssh_client : ssh_clients) {
             if (ssh_client != null && ssh_client.isConnected()) {
                 ssh_client.close();
@@ -162,6 +169,7 @@ public class SftpSquid {
      */
     private SSHClient connect(HostFileInfo hf)
             throws UserAuthException, TransportException, IOException {
+        log.debug("Connecting to " + hf);
         SSHClient ssh = new SSHClient();
         ssh.addHostKeyVerifier(new PromiscuousVerifier());
         ssh.connect(hf.host, hf.port);
@@ -179,8 +187,9 @@ public class SftpSquid {
      * Transfer the files
      */
     public void transfer() throws IOException {
-        String source = hfs[0].file;
+        String source      = hfs[0].file;
         String destination = hfs[1].file;
+        log.debug("transfer(): " + source + " -> " + destination);
 
         try {
             if ( sftp_clients[1].type(destination) == FileMode.Type.DIRECTORY ) {
@@ -193,6 +202,8 @@ public class SftpSquid {
     }
 
     private void transferFile(String source, String destination) throws IOException {
+        log.debug("Transfer " + source + " -> " + destination);
+
         RemoteFile fileSource = sftp_clients[0].open(source);
         RemoteFile fileDestination = sftp_clients[1].open(destination, EnumSet.of(OpenMode.WRITE, OpenMode.CREAT, OpenMode.TRUNC));
 
