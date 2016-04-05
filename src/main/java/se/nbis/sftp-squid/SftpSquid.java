@@ -3,6 +3,8 @@ package se.nbis.sftp_squid;
 import java.util.EnumSet;
 import java.io.IOException;
 import java.net.ConnectException;
+import java.util.LinkedList;
+import java.util.List;
 
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
@@ -10,10 +12,10 @@ import org.apache.log4j.BasicConfigurator;
 
 import org.apache.commons.io.FilenameUtils;
 
-
 import net.schmizz.sshj.SSHClient;
 import net.schmizz.sshj.sftp.SFTPClient;
 import net.schmizz.sshj.sftp.RemoteFile;
+import net.schmizz.sshj.sftp.RemoteResourceInfo;
 import net.schmizz.sshj.sftp.OpenMode;
 import net.schmizz.sshj.sftp.FileMode;
 import net.schmizz.sshj.transport.TransportException;
@@ -191,18 +193,81 @@ public class SftpSquid {
         String destination = hfs[1].file;
         log.debug("transfer(): " + source + " -> " + destination);
 
-        try {
-            if ( sftp_clients[1].type(destination) == FileMode.Type.DIRECTORY ) {
-                destination += '/' + FilenameUtils.getBaseName(source);
+        FileMode.Type sourceType = getType(source, sftp_clients[0]);
+        FileMode.Type destType   = getType(destination, sftp_clients[1]);
+
+        if (sourceType == FileMode.Type.DIRECTORY && destType != sourceType) {
+            throw new IOException("Destination has to be a directory");
+        }
+
+        List<String> sources = buildTransferList(source, sftp_clients[0]);
+
+        int lastSeparatorInSource = FilenameUtils.indexOfLastSeparator(source);
+        if ( lastSeparatorInSource == -1 ) {
+            if ( sourceType == FileMode.Type.REGULAR ) {
+                lastSeparatorInSource = 0;
+            }
+            else {
+                lastSeparatorInSource = source.length();
             }
         }
-        catch (Exception e) {}
+        log.debug("transfer() lastSeparatorInSource: " + lastSeparatorInSource);
 
-        transferFile(source, destination);
+        for (String s : sources) {
+            String d = destination;
+            if ( destType == FileMode.Type.DIRECTORY ) {
+                d += s.substring(lastSeparatorInSource);
+            }
+
+            transferFile(s, d);
+        }
     }
 
+    /**
+     * Create a list of files to transfer
+     */
+    private List<String> buildTransferList(String source, SFTPClient c) throws IOException {
+        log.debug("Building transferlist from " + source);
+
+        FileMode.Type type = getType(source, c);
+        List<String> ret = new LinkedList<String>();
+
+        if (type == FileMode.Type.REGULAR) {
+            ret.add(source);
+            return ret;
+        }
+        if (type != FileMode.Type.DIRECTORY) {
+            throw new IOException("Can't transfer this type of file (" + type + ")");
+        }
+
+        List<RemoteResourceInfo> paths = c.ls(source);
+        for (RemoteResourceInfo p : paths) {
+            ret.addAll( buildTransferList(p.getPath(), c) );
+        }
+
+        return ret;
+    }
+
+    /**
+     * Remove superflous parts of the path, such as double /
+     *
+     * @param String path to normalize
+     * @return String
+     */
+    private String normalizePath(String path) {
+        String normalized = FilenameUtils.normalize(path);
+        return FilenameUtils.separatorsToUnix(normalized); // In case we run on windows
+    }
+
+    /**
+     * Transfer one file between the two systems
+     *
+     * @param source The source file as a string
+     * @param destination the destination file as a string
+     */
     private void transferFile(String source, String destination) throws IOException {
         log.debug("Transfer " + source + " -> " + destination);
+        createPath(destination, sftp_clients[1]);
 
         RemoteFile fileSource = sftp_clients[0].open(source);
         RemoteFile fileDestination = sftp_clients[1].open(destination, EnumSet.of(OpenMode.WRITE, OpenMode.CREAT, OpenMode.TRUNC));
@@ -230,6 +295,40 @@ public class SftpSquid {
     }
 
     /**
+     * Helper to create directories if needed on target
+     */
+    private void createPath(String path, SFTPClient client) {
+        path = normalizePath(path);
+        log.debug("createPath based on " + path);
+
+        String dir = "";
+        if (path.charAt(0) != '/') {
+            dir = ".";
+        }
+
+        String[] components = path.split("/");
+        for(int i=0; i<components.length-1; i++) {
+            dir += '/' + components[i];
+        }
+        dir = normalizePath(dir);
+        if (dir.length() == 0) {
+            return;
+        }
+
+        if (dir.charAt(0) != '/') {
+            dir = "./" + dir;
+        }
+
+        log.debug("createPath: " + dir);
+        try {
+            client.mkdirs(dir);
+        }
+        catch (IOException e) {
+            log.debug("Could not createPath: " + e);
+        }
+    }
+
+    /**
      * Only the filename part of the path
      */
     private String fileNameOnly(String path) {
@@ -246,5 +345,21 @@ public class SftpSquid {
         }
         int packetOverhead = f2.getOutgoingPacketOverhead();
         return remoteMaxPacketSize - packetOverhead;
+    }
+
+    /**
+     * Get filetype
+     */
+    private FileMode.Type getType(String p, SFTPClient c) {
+        FileMode.Type t;
+        try {
+            t = c.type(p);
+            if (t == FileMode.Type.SYMKLINK) {
+                t = getType(c.readlink(p), c);
+            }
+        } catch (Exception e) {
+            t = FileMode.Type.UNKNOWN;
+        }
+        return t;
     }
 }
