@@ -8,6 +8,10 @@
     <name>SFTPSquid</name>
     <url>http://sftp_squid.nbis.se/</url>
 
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+
     <repositories>
         <repository>
             <id>My local server</id>
@@ -72,7 +76,15 @@
                     </archive>
                 </configuration>
             </plugin>
-        </plugins>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-checkstyle-plugin</artifactId>
+          <version>2.17</version>
+        <configuration>
+          <configLocation>google_checks.xml</configLocation>
+        </configuration>
+        </plugin>
+      </plugins>
     </build>
 
     <dependencies>
