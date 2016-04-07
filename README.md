@@ -11,9 +11,9 @@ Build instructions
 
 ### Prerequisites
 
-1. (git)[http://git-scm.com/book/en/v2/Getting-Started-Installing-Git]
-2. (maven)[https://maven.apache.org/]
-3. (Java 1.8)[http://www.oracle.com/technetwork/java/javase/downloads/index.html]
+1. [git](http://git-scm.com/book/en/v2/Getting-Started-Installing-Git)
+2. [maven](https://maven.apache.org/)
+3. [Java 1.8](http://www.oracle.com/technetwork/java/javase/downloads/index.html)
 
 ### Build
 
@@ -31,7 +31,7 @@ machines for testing.
 
 ### Prerequisites
 
-You need virtualbox installed on your system, https://www.virtualbox.org/.
+You need [virtualbox](https://www.virtualbox.org/) installed on your system.
 
 To setup ansible it is recommended that you create a virtual python environment
 using [virtualenv](https://virtualenv.pypa.io/en/latest/). And then install the
