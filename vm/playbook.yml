@@ -1,5 +1,8 @@
 - hosts: node-*
   roles:
       - base
-      - vagrant-password
+      - test_user
       - pam-python
+- hosts: node-1
+  roles:
+      - dummy-files
