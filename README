@@ -1,36 +1,60 @@
 SFTP-Squid - CLI for transferring files between sftp servers
----
+============================================================
+
+Simple usage:
+
+ $ java -jar sftpsquid.jar user1@host1:file user2@host2:
 
 
-Tests are in tests directory.
+Build instructions
+------------------
 
-Currently some tests have been made.
+### Prerequisites
 
-test.py      - paramiko test
-test.pl      - perl ssh2 test
-test.go      - Go test program
-test_scp.sh  - Testing with scp
-test_sftp.sh - Testing with sftp
-Sftp.java    - Testing java jsch library (http://www.jcraft.com/jsch/)
+1. git - http://git-scm.com/book/en/v2/Getting-Started-Installing-Git
+2. maven - https://maven.apache.org/
+3. Java 1.8 - http://www.oracle.com/technetwork/java/javase/downloads/index.html
 
-Location of ssh-keys and/or passwords are hardcoded in these files.
+### Build
 
-Timings:
+Project is easiest built using maven:
 
-scp     13.9    15.1    14.9    14.7    14.5
-sftp    18.2    16.1    17.2    19.4    22.3
-python  28.8    27.0    29.0    26.9    27.2
-perl    44.2    24.2    20.4    19.4    22.4
-Go      22.5    19.8    22.6    19.0    22.6
-Go(c)   19.7    23.5    20.5    20.8    19.4
-Java    13.0    13.1    13.1    13.0    13.1
-SSHj    18.8    20.5    22.4    22.1    17.1
-SSHj-j  14.9    13.7    14.9    13.4    14.9
+ $ mvn package:package
 
 
-The java library seems to be faster than even the scp and sftp programs. The
-upload halts sometimes on large uploads, for no apparent reason (the c.rwsize
-in Session.java of JSch turns to zero and never gets incremented (like it
-normally is)).
+Test environment
+----------------
 
-Gonna try a different Java library.
+There is a test environment in the vm/ subdirectory. It uses vagrant with the
+virtual box provisioner and ansible for configuration to set up 2 virtual
+machines for testing.
+
+### Prerequisites
+
+You need virtualbox installed on your system, https://www.virtualbox.org/.
+
+To setup ansible it is recommended that you create a virtual python environment
+using [virtualenv](https://virtualenv.pypa.io/en/latest/). And then install the
+requirements from the `requirements.txt` file.
+
+    $ cd vm
+    $ virtualenv env
+    $ source env/bin/activate
+    $ pip install -r requirements.txt
+
+### Setup
+
+Once the virtual environment for testing is setup you can spin up the machines:
+
+    $ vagrant up
+
+This will privision 2 virtual machines with ssh open on localhost ports 4021
+and 4022. Both have for the user vagrant password `asdfasdf` and a second
+factor password is set as well which is `hej`.
+
+
+### Test
+
+To then test the transfer of one file do this:
+
+    $ java -jar target/sftpsquid.jar vagrant@localhost:4021:test_file vagrant@localhost:4022:
