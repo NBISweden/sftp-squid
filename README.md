@@ -3,7 +3,7 @@ SFTP-Squid - CLI for transferring files between sftp servers
 
 Simple usage:
 
- $ java -jar sftpsquid.jar user1@host1:file user2@host2:
+    $ java -jar sftpsquid.jar user1@host1:file user2@host2:
 
 
 Build instructions
@@ -11,15 +11,15 @@ Build instructions
 
 ### Prerequisites
 
-1. git - http://git-scm.com/book/en/v2/Getting-Started-Installing-Git
-2. maven - https://maven.apache.org/
-3. Java 1.8 - http://www.oracle.com/technetwork/java/javase/downloads/index.html
+1. (git)[http://git-scm.com/book/en/v2/Getting-Started-Installing-Git]
+2. (maven)[https://maven.apache.org/]
+3. (Java 1.8)[http://www.oracle.com/technetwork/java/javase/downloads/index.html]
 
 ### Build
 
 Project is easiest built using maven:
 
- $ mvn package:package
+    $ mvn package:package
 
 
 Test environment
