@@ -49,12 +49,11 @@ Once the virtual environment for testing is setup you can spin up the machines:
     $ vagrant up
 
 This will privision 2 virtual machines with ssh open on localhost ports 4021
-and 4022. Both have for the user vagrant password `asdfasdf` and a second
+and 4022. Both have for the user `test_user` password `asdfasdf` and a second
 factor password is set as well which is `hej`.
-
 
 ### Test
 
 To then test the transfer of one file do this:
 
-    $ java -jar target/sftpsquid.jar vagrant@localhost:4021:test_file vagrant@localhost:4022:
+    $ java -jar target/sftpsquid.jar test_user@localhost:4021:transfer test_user@localhost:4022:

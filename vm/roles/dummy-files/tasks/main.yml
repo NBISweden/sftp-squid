@@ -1,0 +1,24 @@
+- name: Create transfer directories
+  file: path=/home/test_user/{{ item }} state=directory owner=test_user group=test_user
+  with_items:
+      - transfer
+      - transfer/s1
+      - transfer/s2
+- name: Create dummy files
+  shell: fallocate -l 50M /home/test_user/transfer/{{ item }}
+  with_items:
+      - f1
+      - f2
+      - f3
+      - f4
+      - s1/f5
+      - s1/f6
+- name: Fix ownership of files
+  file: path=/home/test_user/transfer/{{ item }} owner=test_user group=test_user
+  with_items:
+      - f1
+      - f2
+      - f3
+      - f4
+      - s1/f5
+      - s1/f6
