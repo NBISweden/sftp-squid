@@ -19,7 +19,7 @@ Build instructions
 
 Project is easiest built using maven:
 
-    $ mvn package:package
+    $ mvn assembly:assembly
 
 
 Test environment
