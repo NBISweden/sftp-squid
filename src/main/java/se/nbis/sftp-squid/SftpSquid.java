@@ -11,6 +11,8 @@ import net.schmizz.sshj.transport.TransportException;
 import net.schmizz.sshj.transport.verification.PromiscuousVerifier;
 import net.schmizz.sshj.userauth.UserAuthException;
 import net.schmizz.sshj.userauth.method.AuthKeyboardInteractive;
+import net.schmizz.sshj.userauth.method.AuthMethod;
+import net.schmizz.sshj.userauth.method.AuthPassword;
 
 import org.apache.commons.io.FilenameUtils;
 import org.apache.log4j.BasicConfigurator;
@@ -173,7 +175,10 @@ public class SftpSquid {
     ssh.connect(hf.host, hf.port);
 
     try {
-      ssh.auth(hf.user, new AuthKeyboardInteractive(new UserKeyboardAuth(hf)));
+      List<AuthMethod> authmethods = new LinkedList<AuthMethod>();
+      authmethods.add(new AuthKeyboardInteractive(new UserKeyboardAuth(hf)));
+      authmethods.add(new AuthPassword(new PasswordAuth(hf)));
+      ssh.auth(hf.user, authmethods);
     } catch (Exception e) {
       ssh.close(); // We have to clean this up
       throw e;
