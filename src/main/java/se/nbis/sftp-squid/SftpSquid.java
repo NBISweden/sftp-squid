@@ -167,8 +167,7 @@ public class SftpSquid {
    * @param  HostFileInfo A HostFileInfo object representing the server
    * @return SSHClient
    */
-  private SSHClient connect(HostFileInfo hf)
-    throws UserAuthException, TransportException, IOException {
+  private SSHClient connect(HostFileInfo hf) throws IOException {
     log.debug("Connecting to " + hf);
     SSHClient ssh = new SSHClient();
     ssh.addHostKeyVerifier(new PromiscuousVerifier());
@@ -179,10 +178,11 @@ public class SftpSquid {
       authmethods.add(new AuthKeyboardInteractive(new UserKeyboardAuth(hf)));
       authmethods.add(new AuthPassword(new PasswordAuth(hf)));
       ssh.auth(hf.user, authmethods);
-    } catch (Exception e) {
+    } catch (IOException e) {
       ssh.close(); // We have to clean this up
       throw e;
     }
+
     return ssh;
   }
 
