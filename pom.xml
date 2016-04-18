@@ -59,8 +59,8 @@
                     <compilerArgument>
                     -XDignore.symbol.file</compilerArgument>
                     <!-- this is to skip proprierty error -->
-                    <source>1.8</source>
-                    <target>1.8</target>
+                    <source>1.5</source>
+                    <target>1.5</target>
                 </configuration>
             </plugin>
             <plugin>
