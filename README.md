@@ -3,7 +3,7 @@ SFTP-Squid - CLI for transferring files between sftp servers
 
 Simple usage:
 
-    $ java -jar sftpsquid.jar user1@host1:file user2@host2:
+    $ ./sftpsquid user1@host1:file user2@host2:
 
 
 Build instructions
@@ -56,4 +56,4 @@ factor password is set as well which is `hej`.
 
 To then test the transfer of one file do this:
 
-    $ java -jar target/sftpsquid.jar test_user@localhost:4021:transfer test_user@localhost:4022:
+    $ ./sftpsquid test_user@localhost:4021:transfer test_user@localhost:4022:
