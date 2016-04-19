@@ -51,10 +51,16 @@ public class SftpSquid {
     BasicConfigurator.configure();
     Logger.getRootLogger().setLevel(Level.ERROR);
     //Logger.getLogger("se.nbis.sftp_squid.SftpSquid").setLevel(Level.DEBUG);
+    HostFileInfo[] hf;
 
-    HostFileInfo[] hf = parseArgs(args);
-    SftpSquid ss = new SftpSquid(hf);
-    ss.run();
+    try {
+        hf = parseArgs(args);
+        SftpSquid ss = new SftpSquid(hf);
+        ss.run();
+    } catch (IOException e) {
+      System.err.println("ERROR: " + e.getMessage());
+      System.exit(1);
+    }
   }
 
   /**
@@ -62,18 +68,16 @@ public class SftpSquid {
    *
    * @param args the args array from the main method
    */
-  public static HostFileInfo[] parseArgs(String[] args) {
+  public static HostFileInfo[] parseArgs(String[] args) throws IOException {
     if (args.length < 2) {
-      System.err.println("You need to supply at least 2 servers");
-      System.exit(1);
+      throw new IOException("You need to supply at least 2 servers");
     }
     HostFileInfo[] hf = new HostFileInfo[args.length];
     for (int i=0; i < args.length ; i++) {
       try {
         hf[i] = new HostFileInfo(args[i]);
       } catch (IOException e) {
-        System.err.printf("Malformed host argument \"%s\"\n", args[i]);
-        System.exit(1);
+        throw new IOException("Malformed host argument '" + args[i] + "'");
       }
     }
     return hf;
@@ -101,19 +105,9 @@ public class SftpSquid {
     try {
       connectAll();
       transfer();
-    } catch (Exception e) {
-      System.err.println(e.getMessage());
-      usage();
     } finally {
       closeAll();
     }
-  }
-
-  /**
-   * Print a simple usage statement to the user
-   */
-  public void usage() {
-    System.out.println("Usage: sftp-squid <user1>@<server1>:<file_or_directory> <user2>@<server2>:<file_or_directory>");
   }
 
   /**

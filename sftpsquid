@@ -1,3 +1,37 @@
-#!/bin/sh
+#!/bin/bash
+
+usage() {
+    cat << END_HELP
+Usage: sftpsquid <user1>@<server1>[:port]:<path> <user2>@<server2>[:port]:<path>
+
+sftpsquid copies files and directories from one SFTP server to another.
+The server is specified according to this schema
+
+    <user>@<server>[:port]:<path>
+
+Where port is by default 22, which is the standard SFTP port.
+Example server specifications:
+
+    mary@secretserver.net:documents/
+    fred@groot.com:2205:tree_of_life.txt
+
+A full example:
+
+    $ sftpsquid mary@secretserver.net:documents mary@bah.net:
+
+This would copy the directory (or file) documents from marys account on
+secretserver.net to her account on bah.net
+END_HELP
+}
+
+while getopts 'h' opt; do
+    case $opt in
+        h) usage; exit ;;
+    esac
+done
 
 java -jar target/sftpsquid.jar "$@"
+
+if [ $? -ne 0 ]; then
+    echo "Please see the help (-h) for more information"
+fi
