@@ -75,4 +75,4 @@ factor password is set as well which is `hej`.
 
 To then test the transfer of one directory do this:
 
-    $ ./sftpsquid test_user@localhost:4021:transfer test_user@localhost:4022:
+    $ sftpsquid test_user@localhost:4021:transfer test_user@localhost:4022:
