@@ -3,7 +3,21 @@ SFTP-Squid - CLI for transferring files between sftp servers
 
 Simple usage:
 
-    $ ./sftpsquid user1@host1:file user2@host2:
+    $ sftpsquid user1@host1:file user2@host2:
+
+
+Installation instructions
+-------------------------
+
+### Linux and MacOS:
+
+1. Download the latest release from [github](https://github.com/BILS/sftp-squid/releases)
+2. Unzip the file.
+
+Then you can run it either from inside the directory or you can move the two
+files (`sftpsquid` and `sftpsquid.jar`) somewhere convenient. We recommend you
+to use your `bin` directory, i.e. `/Users/<your_user_name>/bin/` on Mac and
+`/home/<your_user_name>/bin` on linux.
 
 
 Build instructions
@@ -15,11 +29,16 @@ Build instructions
 2. [maven](https://maven.apache.org/)
 3. [Java 1.8](http://www.oracle.com/technetwork/java/javase/downloads/index.html)
 
+### Checkout the source
+
+    $ git clone https://github.com/BILS/sftp-squid.git
+    $ cd sftp-squid
+
 ### Build
 
 Project is easiest built using maven:
 
-    $ mvn assembly:single
+    $ mvn clean compile assembly:single
 
 
 Test environment
@@ -54,6 +73,6 @@ factor password is set as well which is `hej`.
 
 ### Test
 
-To then test the transfer of one file do this:
+To then test the transfer of one directory do this:
 
-    $ ./sftpsquid test_user@localhost:4021:transfer test_user@localhost:4022:
+    $ sftpsquid test_user@localhost:4021:transfer test_user@localhost:4022:
