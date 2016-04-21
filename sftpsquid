@@ -30,7 +30,20 @@ while getopts 'h' opt; do
     esac
 done
 
-java -jar target/sftpsquid.jar "$@"
+# Find the directory that the bash script is in and use that as a path for the
+# jar file.
+jardir="$(dirname $(readlink -f -- "$0"))"
+
+if [ ! -f "$jardir/sftpsquid.jar" ]; then
+    if [ ! -f "$jardir/target/sftpsquid.jar" ]; then
+        echo "Can't find \"sftpsquid.jar\". Please check your installation"
+        exit 1
+    else
+        jardir="$jardir/target"
+    fi
+fi
+
+java -jar $jardir/sftpsquid.jar "$@"
 
 if [ $? -ne 0 ]; then
     echo "Please see the help (-h) for more information"
