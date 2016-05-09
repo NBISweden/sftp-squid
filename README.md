@@ -1,5 +1,5 @@
-SFTP-Squid - CLI for transferring files between sftp servers
-============================================================
+SFTP-Squid - CLI for transferring files between two remote SFTP servers
+=======================================================================
 
 Simple usage:
 
